@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<script>
+  // resolve,reject,all,ract
+  //resolve ==then, reject == catch
+  let promise = new Promise((resolve, reject) => {
+       reject(11111111);
+  });
+  promise.then(res => {
+    console.log("成功");
+  }).catch(err => {
+    console.log("失败");
+    console.log(err);
+
+  });
+</script>
+</body>
+</html>
