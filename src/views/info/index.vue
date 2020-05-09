@@ -102,7 +102,7 @@
           <el-button
             size="mini"
             type="danger"
-            @click="deleteItem(scope.$index, scope.row)"
+            @click="deleteClick(scope.$index, scope.row)"
             >删除</el-button
           >
         </template>
@@ -134,10 +134,12 @@
 <script>
 import { reactive, ref } from "@vue/composition-api";
 import addInfo from "./dialog/add";
+//import { globale } from "../../utils/global_V3";  // 3.0自定全局方法
 export default {
   components: { addInfo },
   setup(props, { root }) {
-    root.test111();
+    // const { confirm } = globale(); 3.0自定全局方法
+    //confirm();
     /***********************************************************************************************
      * 模块值
      *
@@ -177,25 +179,25 @@ export default {
     // 表格数据
     const tableData = reactive([
       {
-        title: "xxxx",
+        title: "xxxx1",
         category: "xxx",
         date: "2016-05-02",
         user: "王小虎"
       },
       {
-        title: "xxxx",
+        title: "xxxx2",
         category: "xxx",
         date: "2016-05-02",
         user: "王小虎"
       },
       {
-        title: "xxxx",
+        title: "xxxx3",
         category: "xxx",
         date: "2016-05-02",
         user: "王小虎"
       },
       {
-        title: "xxxx",
+        title: "xxxx4",
         category: "xxx",
         date: "2016-05-02",
         user: "王小虎"
@@ -218,41 +220,27 @@ export default {
     const closeDialog = () => {
       dialogFormVisible.value = false;
     };
-    // 删除单条记录
-    const deleteItem = (index, row) => {
+    // 删除按钮事件
+    const deleteClick = (index, row) => {
       console.log(index);
       console.log(row);
-      root
-        .$confirm("此操作将删除该数据, 是否继续?", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-          center: true
-        })
-        .then(() => {
-          tableData.splice(index, 1);
-          root.$message({
-            type: "success",
-            message: "删除成功!"
-          });
-        })
-        .catch(() => {
-          root.$message({
-            type: "info",
-            message: "已取消删除"
-          });
-        });
+      root.confirm({
+        title: "确定要删除该条记录码？",
+        fn: deleteItem,
+        num: index
+      });
+    };
+    // 删除单行记录
+    const deleteItem = i => {
+      tableData.splice(i, 1);
     };
     // 删除多行记录
-    const batchDel = (rows) => {
-      if (rows) {
-        rows.forEach(row => {
-          this.$refs.multipleTable.toggleRowSelection(row);
-        });
-      } else {
-        this.$refs.multipleTable.clearSelection();
-      }
+    const batchDel = () => {
+      root.$refs.multipleTable.toggleRowSelection(0);
+      root.$refs.multipleTable.toggleRowSelection(1);
     };
+    //  表单checkout 选中事件
+    const selectCheckout = () => {};
     return {
       options,
       value,
@@ -264,8 +252,9 @@ export default {
       handleCurrentChange, //分页
       handleSizeChange, //分页
       closeDialog, //子组件回调父组件方法
-      deleteItem, // 删除按钮确认弹框
-      batchDel // 批量删除
+      deleteClick, // 删除按钮确认弹框
+      batchDel, // 批量删除
+      selectCheckout
     };
   }
 };
