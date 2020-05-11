@@ -1,8 +1,7 @@
-
- /**
+/**
  * 自定义全局方法 v3.0
  * */
-export function globale(){
+export function globale() {
   const confirm = () => {
     // MessageBox.confirm(param.title, "提示", {
     //   confirmButtonText: "确定",
@@ -29,7 +28,5 @@ export function globale(){
   };
   return {
     confirm
-  }
- }
-
-
+  };
+}
