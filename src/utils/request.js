@@ -1,6 +1,6 @@
 /*拦截器配置*/
 import axios from "axios";
-import { Message } from "element-ui";
+import { getCookie } from "@/utils/app";
 const sevice = axios.create({
   baseURL: "/api",
   timeout: process.env.APP_VUE_TIMEOUT
@@ -8,7 +8,11 @@ const sevice = axios.create({
 // 添加请求拦截器（请求接口前的数据处理）
 sevice.interceptors.request.use(
   function(config) {
-    config.headers["token"] = "PPX";
+    if (getCookie("token") && getCookie("username")) {
+      config.headers["Tokey"] = getCookie("token");
+      config.headers["UserName"] = getCookie("username");
+    }
+
     // 在发送请求之前做些什么
     return config;
   },
@@ -25,15 +29,15 @@ sevice.interceptors.response.use(
     let data = response.data;
     // 对响应数据做点什么
     if (data.resCode !== 0) {
-      Message.error(data.message);
       return Promise.reject(data);
     } else {
       return response;
     }
   },
   function(error) {
+    let data = error.data;
     // 对响应错误做点什么
-    return Promise.reject(error);
+    return Promise.reject(data);
   }
 );
 export default sevice;
