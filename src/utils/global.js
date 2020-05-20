@@ -14,12 +14,15 @@ export default {
         center: true
       })
         .then(() => {
-          Message({
-            type: "success",
-            message: "删除成功!"
-          });
-          if (param.fn) {
+          // Message({
+          //   type: "success",
+          //   message: "删除成功!"
+          // });
+          if (param.num) {
             param.fn(param.num);
+          }
+          if (param.category) {
+            param.fn(param.category);
           }
         })
         .catch(() => {
@@ -27,6 +30,8 @@ export default {
             type: "info",
             message: "已取消删除"
           });
+          // 点击取消按钮执行的方法
+          param.catchFn && param.catchFn();
         });
     };
   }

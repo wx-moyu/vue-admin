@@ -7,10 +7,10 @@
           <div class="warp-content">
             <el-select v-model="value" placeholder="请选择">
               <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+                v-for="item in categoryOptions.item"
+                :key="item.id"
+                :label="item.category_name"
+                :value="item.id"
               >
               </el-option>
             </el-select>
@@ -85,13 +85,14 @@
     </el-row>
     <div class="black-place-30"></div>
     <!--表格数据-->
-    <el-table :data="tableData" border style="width: 100%">
+    <el-table :data="tableData.item" border style="width: 100%">
       <el-table-column type="selection" width="45"> </el-table-column>
       <el-table-column prop="title" label="标题" width="840"> </el-table-column>
-      <el-table-column prop="category" label="类别" width="130">
+      <el-table-column prop="categoryId" label="类别" width="130">
       </el-table-column>
-      <el-table-column prop="date" label="日期" width="137"> </el-table-column>
-      <el-table-column prop="user" label="管理人" width="115">
+      <el-table-column prop="createDate" label="日期" width="137">
+      </el-table-column>
+      <el-table-column prop="content" label="管理人" width="115">
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
@@ -127,38 +128,31 @@
       >
       </el-pagination>
     </el-row>
-    <add-info :flag.sync="dialogFormVisible" @close="closeDialog" />
+    <add-info
+      :flag.sync="dialogFormVisible"
+      @close="closeDialog"
+      :categoryOptions="categoryOptions.item"
+    />
   </div>
 </template>
 
 <script>
-import { reactive, ref } from "@vue/composition-api";
+import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 import addInfo from "./dialog/add";
-//import { globale } from "../../utils/global_V3";  // 3.0自定全局方法
+import { common } from "@/utils/common";
+import { getListApi } from "@/api/news";
+
 export default {
   components: { addInfo },
   setup(props, { root }) {
-    // const { confirm } = globale(); 3.0自定全局方法
-    //confirm();
+    const { categoryInfo, getInfoCategory } = common();
+
     /***********************************************************************************************
      * 模块值
      *
      * */
     // 类型下拉选项
-    const options = reactive([
-      {
-        value: "1",
-        label: "国际信息"
-      },
-      {
-        value: "2",
-        label: "行业信息"
-      },
-      {
-        value: "3",
-        label: "国内信息"
-      }
-    ]);
+    const categoryOptions = reactive({ item: [] });
     // 关键字下拉选项
     const key_options = reactive([
       {
@@ -177,32 +171,7 @@ export default {
     // 日期
     const date_time = ref("");
     // 表格数据
-    const tableData = reactive([
-      {
-        title: "xxxx1",
-        category: "xxx",
-        date: "2016-05-02",
-        user: "王小虎"
-      },
-      {
-        title: "xxxx2",
-        category: "xxx",
-        date: "2016-05-02",
-        user: "王小虎"
-      },
-      {
-        title: "xxxx3",
-        category: "xxx",
-        date: "2016-05-02",
-        user: "王小虎"
-      },
-      {
-        title: "xxxx4",
-        category: "xxx",
-        date: "2016-05-02",
-        user: "王小虎"
-      }
-    ]);
+    const tableData = reactive({ item: [] });
     // dialog 显示/影藏
     const dialogFormVisible = ref(false);
     /*************************************************************************************************
@@ -232,6 +201,7 @@ export default {
     };
     // 删除单行记录
     const deleteItem = i => {
+
       tableData.splice(i, 1);
     };
     // 删除多行记录
@@ -241,8 +211,32 @@ export default {
     };
     //  表单checkout 选中事件
     const selectCheckout = () => {};
+    // 获取信息列表
+    const getInfoList = () => {
+      getListApi({ pageNumber: 1, pageSize: 10 })
+        .then(res => {
+          const data = res.data;
+          if (data.resCode === 0) {
+            tableData.item = data.data.data;
+          }
+        })
+        .catch();
+    };
+    /**
+     * 生命周期
+     * */
+    onMounted(() => {
+      getInfoCategory();
+      getInfoList();
+    });
+    watch(
+      () => categoryInfo.item,
+      value => {
+        categoryOptions.item = value;
+      }
+    );
     return {
-      options,
+      categoryOptions,
       value,
       date_time,
       key_options,

@@ -14,12 +14,18 @@
               <svg-icon icon-class="plus"></svg-icon>
               {{ item.category_name }}
               <div class="pull-right button-wrap">
-                <el-button type="warning" size="mini" round>编辑</el-button>
+                <el-button
+                  type="warning"
+                  size="mini"
+                  round
+                  @click="editCategory(item.id, item.category_name, index)"
+                  >编辑</el-button
+                >
                 <el-button type="success" size="mini" round>添加子级</el-button>
                 <el-button
                   size="mini"
                   round
-                  @click="deleteFirst(item.id, index)"
+                  @click="deleteFirstConfirm(item.id, index)"
                   >删除</el-button
                 >
               </div>
@@ -63,12 +69,20 @@
 
 <script>
 import { reactive, ref, onMounted } from "@vue/composition-api";
-import { addFirstCategory, getCategoryAll, deleteCategory } from "@/api/news";
+import {
+  addFirstCategory,
+  getCategoryAll,
+  deleteCategory,
+  editCategoryApi
+} from "@/api/news";
 export default {
   setup(props, { root }) {
     /**
      *模块值
      * */
+    // 表单提交按钮类型
+    const submit_button_type = ref(""); // 1：添加一级标题 2：编辑1级别标题  3：添加一级标题 4：编辑1级别标题
+    // 编辑的id
     // 表单数据项显示状态
     const category_first_input = ref(true); //一级标题
     const category_children_input = ref(true); //子标题
@@ -95,30 +109,37 @@ export default {
     const addFirst = () => {
       category_first_input.value = true;
       category_children_input.value = false;
+      submit_button_type.value = "1";
     };
     // 表单提交事件
     const submit = () => {
-      if (menuTitle.categoryName === "") {
-        root.$message.error("请输入菜单名称");
-        return;
-      }
-      submit_loading.value = true;
-      addFirstCategory({ categoryName: menuTitle.categoryName })
-        .then(res => {
-          const data = res.data;
-          if (data.resCode === 0) {
-            category.item.push(data.data);
-            root.$message.success(data.message);
+      switch (submit_button_type) {
+        case "1":
+          if (menuTitle.categoryName === "") {
+            root.$message.error("请输入菜单名称");
+            return;
           }
-          menuTitle.categoryName = "";
-          submit_loading.value = false;
-        })
-        .catch(res => {
-          const data = res.data;
-          root.$message.error(data.message);
-          menuTitle.categoryName = "";
-          submit_loading.value = false;
-        });
+          submit_loading.value = true;
+          addFirstCategory({ categoryName: menuTitle.categoryName })
+            .then(res => {
+              const data = res.data;
+              if (data.resCode === 0) {
+                category.item.push(data.data);
+                root.$message.success(data.message);
+              }
+              menuTitle.categoryName = "";
+              submit_loading.value = false;
+            })
+            .catch(res => {
+              const data = res.data;
+              root.$message.error(data.message);
+              menuTitle.categoryName = "";
+              submit_loading.value = false;
+            });
+          break;
+        case "2":
+          break;
+      }
     };
     // 获取分类信息
     const getCategoryAllValue = () => {
@@ -134,19 +155,45 @@ export default {
           root.$message.error(data.message);
         });
     };
-    // 删除菜单
-    const deleteFirst = (id, sn) => {
-      deleteCategory({ categoryId: id })
+    // 删除一级标题Confirm
+    const deleteFirstConfirm = (id, sn) => {
+      root.confirm({
+        title: "确定要删除该菜单么?",
+        fn: deleteFirst,
+        category: {
+          id: id,
+          sn: sn
+        }
+      });
+    };
+    // 删除一级标题function
+    const deleteFirst = category => {
+      deleteCategory({ categoryId: category.id })
         .then(res => {
           let data = res.data;
           if (data.resCode === 0) {
             root.$message.success(data.message);
-            category.item.splice(sn, 1);
+            category.item.splice(category.sn, 1);
           }
         })
         .catch(res => {
-          console.log(res);
+          let data = res.data;
+          root.$message.error(data.message);
         });
+    };
+    // 编辑一级标题
+    const editCategory = (id, value, sn) => {
+      submit_button_type.value = "2";
+      menuTitle.categoryName = value;
+      editCategoryApi({ id: id, categoryName: menuTitle.categoryName })
+        .then(res => {
+          let data = res.data;
+          if (data.resCode === 0) {
+            category.item[sn].categoryName = menuTitle.categoryName;
+            root.$message.success(data.message);
+          }
+        })
+        .catch();
     };
     return {
       //ref
@@ -159,7 +206,8 @@ export default {
       // function
       submit, // 表单提交
       addFirst, // 添加一级菜单按钮
-      deleteFirst
+      deleteFirstConfirm,
+      editCategory
     };
   }
 };

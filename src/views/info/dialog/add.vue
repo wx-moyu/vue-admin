@@ -4,15 +4,16 @@
     :visible.sync="dialog_add_flag"
     @close="close()"
     width="580px"
+    @open="openDialog"
   >
-    <el-form :model="updateFrom">
+    <el-form :model="updateFrom" ref="updateFrom">
       <el-form-item label="类型:" :label-width="label_width">
         <el-select v-model="updateFrom.category" placeholder="请选择活动区域">
           <el-option
-            v-for="item in options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+            v-for="item in categoryInfo.item"
+            :key="item.id"
+            :label="item.category_name"
+            :value="item.id"
           >
           </el-option>
         </el-select>
@@ -25,31 +26,35 @@
           type="textarea"
           :rows="3"
           placeholder="请输入内容"
-          v-model="updateFrom.summary"
+          v-model="updateFrom.content"
         >
         </el-input>
       </el-form-item>
     </el-form>
     <div slot="footer" class="dialog-footer">
       <el-button @click="dialog_add_flag = false">取 消</el-button>
-      <el-button type="danger" @click="dialog_add_flag = false"
-        >确 定</el-button
-      >
+      <el-button type="danger" @click="submit">确 定</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
 import { ref, reactive, watch } from "@vue/composition-api";
+import { addApi } from "@/api/news";
+
 export default {
   // 单项数据   父 = 》子 不能反向修改数据
   props: {
     flag: {
       type: Boolean,
       default: false
+    },
+    categoryOptions: {
+      type: Array,
+      default: () => []
     }
   },
-  setup(props, { emit }) {
+  setup(props, { emit, root }) {
     /**********************************************************************************
      * 模块值
      * */
@@ -57,27 +62,14 @@ export default {
     const label_width = ref("70px");
     //dialog 显示/关闭状态
     const dialog_add_flag = ref(false);
-    // 下拉列表选项
-    const options = reactive([
-      {
-        value: 1,
-        label: "国际信息"
-      },
-      {
-        value: 2,
-        label: "行业信息"
-      },
-      {
-        value: 3,
-        label: "国内信息"
-      }
-    ]);
     // 表单提交数据
     const updateFrom = reactive({
       category: "",
       title: "",
-      summary: ""
+      content: ""
     });
+    // 下拉列表选项
+    const categoryInfo = reactive({ item: [] });
     /*****************************************************************
      * 方法
      * */
@@ -90,15 +82,49 @@ export default {
     watch(() => {
       dialog_add_flag.value = props.flag;
     });
+    const openDialog = () => {
+      categoryInfo.item = props.categoryOptions;
+    };
+    //确定按钮事件
+    const submit = () => {
+      if (!updateFrom.category) {
+        root.$message.error("请选择类型");
+        return;
+      }
+      if (!updateFrom.title) {
+        root.$message.error("请输入标题");
+        return;
+      }
+      if (!updateFrom.content) {
+        root.$message.error("请输入内容");
+        return;
+      }
+      addApi(updateFrom)
+        .then(res => {
+          let data = res.data;
+          if (data.resCode === 0) {
+            root.$message.error(data.message);
+            dialog_add_flag.value = false;
+            root.$refs["updateFrom"].resetFields();
+          }
+        })
+        .catch(res => {
+          console.log(res);
+          // let data = res.data;
+          // root.$message.error(data.message);
+        });
+    };
     return {
       // ref
       dialog_add_flag,
       label_width,
       //  reactive
-      options,
       updateFrom,
+      categoryInfo,
       // function
-      close
+      close,
+      openDialog,
+      submit
     };
   }
 };
